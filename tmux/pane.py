@@ -1,33 +1,48 @@
+#  ______ _  ______ _   _                       _              
+#  |  _  \ | | ___ \ | | |                     | |             
+#  | | | | |_| |_/ / |_| |______ _ __ ___ _ __ | |_ _   _ _ __ 
+#  | | | | __|    /|  _  |______| '__/ _ \ '_ \| __| | | | '__|
+#  | |/ /| |_| |\ \| | | |      | | |  __/ |_) | |_| |_| | |   
+#  |___/  \__\_| \_\_| |_/      |_|  \___| .__/ \__|\__, |_|   
+#                                        | |         __/ |     
+#                                        |_|        |___/      
+#  Version: 0.0.2
+#  File: tmux/pane.py
+#  Date: Friday 5th, July 2024
+#                                              https://dtrh.net
+#                                 < admin [at] dtrh [dot] net >
+
 import subprocess
+from hooks import hook_manager
+from utils import get_current_state
+import global_state
 
-def split_tmux_pane(session_name, window_index, direction='h'):
-    """
-    Splits a pane in the specified tmux window.
-
-    Args:
-        session_name (str): Name of the tmux session.
-        window_index (int): Index of the tmux window.
-        direction (str): Direction to split the pane ('h' for horizontal, 'v' for vertical).
-    """
+def split_tmux_pane(direction='h', session_name=None, window_index=None):
+    session_name, window_index, _ = get_current_state(session_name, window_index)
     direction_flag = '-h' if direction == 'h' else '-v'
+    hook_manager.run_hooks('before_function', 'split_tmux_pane', session_name, window_index, direction)
     try:
-        subprocess.run(['tmux', 'split-window', direction_flag, '-t', f'{session_name}:{window_index}'], check=True)
+        result = subprocess.run(['tmux', 'split-window', direction_flag, '-t', f'{session_name}:{window_index}', '-F', '#{pane_id}'], capture_output=True, text=True, check=True)
+        pane_index = result.stdout.strip()
+        global_state.current_pane = pane_index  # Update current pane
+        hook_manager.run_hooks('after_function', 'split_tmux_pane', session_name, window_index, direction)
     except subprocess.CalledProcessError as e:
         print(f"Error splitting pane in window {window_index} of session '{session_name}' in direction '{direction}': {e}")
 
-def kill_tmux_pane(session_name, window_index, pane_index):
-    """
-    Kills a pane in the specified tmux window.
-
-    Args:
-        session_name (str): Name of the tmux session.
-        window_index (int): Index of the tmux window.
-        pane_index (int): Index of the pane to kill.
-    """
+def kill_tmux_pane(pane_index=None, session_name=None, window_index=None):
+    session_name, window_index, pane_index = get_current_state(session_name, window_index, pane_index)
+    if pane_index is None:
+        print("Error: No pane specified and no current pane set.")
+        return
+    hook_manager.run_hooks('before_function', 'kill_tmux_pane', session_name, window_index, pane_index)
     try:
         subprocess.run(['tmux', 'kill-pane', '-t', f'{session_name}:{window_index}.{pane_index}'], check=True)
+        if global_state.current_pane == pane_index:
+            global_state.current_pane = None  # Reset current pane if it was the one killed
+        hook_manager.run_hooks('after_function', 'kill_tmux_pane', session_name, window_index, pane_index)
     except subprocess.CalledProcessError as e:
         print(f"Error killing pane {pane_index} in window {window_index} of session '{session_name}': {e}")
+
 
 def list_tmux_panes(session_name, window_index):
     """
