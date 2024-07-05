@@ -1,22 +1,41 @@
+#  ______ _  ______ _   _                       _              
+#  |  _  \ | | ___ \ | | |                     | |             
+#  | | | | |_| |_/ / |_| |______ _ __ ___ _ __ | |_ _   _ _ __ 
+#  | | | | __|    /|  _  |______| '__/ _ \ '_ \| __| | | | '__|
+#  | |/ /| |_| |\ \| | | |      | | |  __/ |_) | |_| |_| | |   
+#  |___/  \__\_| \_\_| |_/      |_|  \___| .__/ \__|\__, |_|   
+#                                        | |         __/ |     
+#                                        |_|        |___/      
+#  Version: 0.0.2
+#  File: tmux/cmds.py
+#  Date: Friday 5th, July 2024
+#                                              https://dtrh.net
+#                                 < admin [at] dtrh [dot] net >
+
 import subprocess
-from session import list_tmux_sessions
-from window import list_tmux_windows
-from pane import list_tmux_panes
+from hooks import hook_manager
+from utils import get_current_state
+import global_state
 
-def send_keys_to_pane(session_name, window_index, pane_index, keys):
-    """
-    Sends keystrokes to a specific tmux pane.
-
-    Args:
-        session_name (str): Name of the tmux session.
-        window_index (int): Index of the tmux window.
-        pane_index (int): Index of the tmux pane.
-        keys (str): Keystrokes to send to the tmux pane.
-    """
+def send_keys_to_pane(keys, session_name=None, window_index=None, pane_index=None):
+    session_name, window_index, pane_index = get_current_state(session_name, window_index, pane_index)
+    if pane_index is None:
+        print("Error: No pane specified and no current pane set.")
+        return
+    hook_manager.run_hooks('before_function', 'send_keys_to_pane', session_name, window_index, pane_index, keys)
     try:
         subprocess.run(['tmux', 'send-keys', '-t', f'{session_name}:{window_index}.{pane_index}', keys, 'C-m'], check=True)
+        hook_manager.run_hooks('after_function', 'send_keys_to_pane', session_name, window_index, pane_index, keys)
     except subprocess.CalledProcessError as e:
         print(f"Error sending keys to pane {pane_index} in window {window_index} of session '{session_name}': {e}")
+
+def execute_tmux_command(command, *args):
+    hook_manager.run_hooks('before_function', 'execute_tmux_command', command, args)
+    try:
+        subprocess.run(['tmux', command] + list(args), check=True)
+        hook_manager.run_hooks('after_function', 'execute_tmux_command', command, args)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing tmux command '{command} {args}': {e}")
 
 def capture_pane_output(session_name, window_index, pane_index):
     """
