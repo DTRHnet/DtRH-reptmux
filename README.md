@@ -1,4 +1,4 @@
-# DtRH-reptmux
+# DtRH-reptmux: Simplifying Tmux and Process Management
 
 ## Overview
 
@@ -6,11 +6,16 @@ DtRH-reptmux is a robust toolset and wrapper for managing tmux sessions, windows
 
 ## Features
 
-- **Global State Management:** Maintain and use the current session, window, and pane across operations.
-- **Unified State Retrieval:** Simplify function calls by using global state defaults.
-- **Hook Management:** Integrate custom hooks to monitor and log function calls.
+Reptmux is designed to address several key challenges:
+
+- **Focused Function Wrapping:** Rather than wrapping every tmux function, Reptmux simplifies the most common tmux operations without relying on the libtmux library.
+- **Unified Property State Management:** Reptmux manages tmux properties to make intelligent assumptions when parameters are missing. For example, if you create a window without specifying a session ID/name, it defaults to the current session gracefully.
+- **Flexible Hooking:** Built-in function hooking allows for code injection before, after, or at any point during the execution of wrapped functions, providing great flexibility.
+- **Process Management with Reptyr:** Integrating reptyr makes it easy to move existing processes and terminals into and out of tmux sessions.
+- **Terminal Communication:** Simplify sending and recieving data amongst regular terminals as well as tmux panes and windows 
 - **Enhanced Error Handling:** Gracefully handle errors and provide informative messages.
-- **Reptyr Integration:** Attach and manage processes within tmux panes or terminals.
+- **Modular Design:** Reptmux is designed for easy integration, whether you need part or all of its functionality. Simply import the required modules and get started.
+- **Future Scripting Language:** A simple scripting language is planned to work with Reptmux, further simplifying interactions and making tmux management more accessible than ever.
 
 ## Installation
 
@@ -61,6 +66,8 @@ Ensure the tmux server is running and perform various operations using the provi
 ```python
 # main.py
 
+# Imports will be packaged in the future to reduce unnecessary typing
+#
 from tmux.session import create_tmux_session, kill_tmux_session
 from tmux.window import create_tmux_window, kill_tmux_window
 from tmux.pane import split_tmux_pane, kill_tmux_pane
@@ -77,8 +84,8 @@ custom_hooks.hook_manager.enable_hooks()
 start_tmux_server()
 
 # Example function calls to demonstrate hooks and global state usage
-create_tmux_session("example_session")
-create_tmux_window("example_window")  # No session name provided, uses current session
+create_tmux_session("REPTMUX")
+create_tmux_window("REPTMUX-WINDOW")  # No session name provided, uses current session
 split_tmux_pane('h')  # No session or window provided, uses current session and window
 send_keys_to_pane("echo 'Hello, tmux!'")  # No session, window, or pane provided
 kill_tmux_pane()  # No session, window, or pane provided
