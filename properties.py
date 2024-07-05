@@ -1,3 +1,18 @@
+#  ______ _  ______ _   _                       _              
+#  |  _  \ | | ___ \ | | |                     | |             
+#  | | | | |_| |_/ / |_| |______ _ __ ___ _ __ | |_ _   _ _ __ 
+#  | | | | __|    /|  _  |______| '__/ _ \ '_ \| __| | | | '__|
+#  | |/ /| |_| |\ \| | | |      | | |  __/ |_) | |_| |_| | |   
+#  |___/  \__\_| \_\_| |_/      |_|  \___| .__/ \__|\__, |_|   
+#                                        | |         __/ |     
+#                                        |_|        |___/      
+#  Version: 0.0.2
+#  File: properties.py
+#  Date: Friday 5th, July 2024
+#                                              https://dtrh.net
+#                                 < admin [at] dtrh [dot] net >
+
+
 import subprocess
 from tmux.session import list_tmux_sessions
 from tmux.window import list_tmux_windows
