@@ -1,28 +1,40 @@
+#  ______ _  ______ _   _                       _              
+#  |  _  \ | | ___ \ | | |                     | |             
+#  | | | | |_| |_/ / |_| |______ _ __ ___ _ __ | |_ _   _ _ __ 
+#  | | | | __|    /|  _  |______| '__/ _ \ '_ \| __| | | | '__|
+#  | |/ /| |_| |\ \| | | |      | | |  __/ |_) | |_| |_| | |   
+#  |___/  \__\_| \_\_| |_/      |_|  \___| .__/ \__|\__, |_|   
+#                                        | |         __/ |     
+#                                        |_|        |___/      
+#  Version: 0.0.2
+#  File: tmux/window.py
+#  Date: Friday 5th, July 2024
+#                                              https://dtrh.net
+#                                 < admin [at] dtrh [dot] net >
+
 import subprocess
+from hooks import hook_manager
+from utils import get_current_state
+import global_state
 
-def create_tmux_window(session_name, window_name):
-    """
-    Creates a new window in the specified tmux session.
-
-    Args:
-        session_name (str): Name of the tmux session.
-        window_name (str): Name of the new window.
-    """
+def create_tmux_window(window_name, session_name=None):
+    session_name, _, _ = get_current_state(session_name)
+    hook_manager.run_hooks('before_function', 'create_tmux_window', session_name, window_name)
     try:
         subprocess.run(['tmux', 'new-window', '-t', session_name, '-n', window_name], check=True)
+        global_state.current_window = window_name  # Update current window
+        hook_manager.run_hooks('after_function', 'create_tmux_window', session_name, window_name)
     except subprocess.CalledProcessError as e:
         print(f"Error creating window '{window_name}' in session '{session_name}': {e}")
 
-def kill_tmux_window(session_name, window_index):
-    """
-    Kills a window in the specified tmux session.
-
-    Args:
-        session_name (str): Name of the tmux session.
-        window_index (int): Index of the window to kill.
-    """
+def kill_tmux_window(window_index=None, session_name=None):
+    session_name, window_index, _ = get_current_state(session_name, window_index)
+    hook_manager.run_hooks('before_function', 'kill_tmux_window', session_name, window_index)
     try:
         subprocess.run(['tmux', 'kill-window', '-t', f'{session_name}:{window_index}'], check=True)
+        if global_state.current_window == window_index:
+            global_state.current_window = None  # Reset current window if it was the one killed
+        hook_manager.run_hooks('after_function', 'kill_tmux_window', session_name, window_index)
     except subprocess.CalledProcessError as e:
         print(f"Error killing window {window_index} in session '{session_name}': {e}")
 
