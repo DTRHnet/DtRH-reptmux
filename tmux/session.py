@@ -1,28 +1,42 @@
+#  ______ _  ______ _   _                       _              
+#  |  _  \ | | ___ \ | | |                     | |             
+#  | | | | |_| |_/ / |_| |______ _ __ ___ _ __ | |_ _   _ _ __ 
+#  | | | | __|    /|  _  |______| '__/ _ \ '_ \| __| | | | '__|
+#  | |/ /| |_| |\ \| | | |      | | |  __/ |_) | |_| |_| | |   
+#  |___/  \__\_| \_\_| |_/      |_|  \___| .__/ \__|\__, |_|   
+#                                        | |         __/ |     
+#                                        |_|        |___/      
+#  Version: 0.0.2
+#  File: tmux/session.py
+#  Date: Friday 5th, July 2024
+#                                              https://dtrh.net
+#                                 < admin [at] dtrh [dot] net >
+
 import subprocess
+from hooks import hook_manager
+from utils import get_current_state
+import global_state
 
 def create_tmux_session(session_name):
-    """
-    Creates a new tmux session.
-
-    Args:
-        session_name (str): Name of the tmux session.
-    """
+    hook_manager.run_hooks('before_function', 'create_tmux_session', session_name)
     try:
         subprocess.run(['tmux', 'new-session', '-d', '-s', session_name], check=True)
+        global_state.current_session = session_name  # Update current session
+        hook_manager.run_hooks('after_function', 'create_tmux_session', session_name)
     except subprocess.CalledProcessError as e:
         print(f"Error creating session '{session_name}': {e}")
 
-def kill_tmux_session(session_name):
-    """
-    Kills an existing tmux session.
-
-    Args:
-        session_name (str): Name of the tmux session to kill.
-    """
+def kill_tmux_session(session_name=None):
+    session_name, _, _ = get_current_state(session_name)
+    hook_manager.run_hooks('before_function', 'kill_tmux_session', session_name)
     try:
         subprocess.run(['tmux', 'kill-session', '-t', session_name], check=True)
+        if global_state.current_session == session_name:
+            global_state.current_session = None  # Reset current session if it was the one killed
+        hook_manager.run_hooks('after_function', 'kill_tmux_session', session_name)
     except subprocess.CalledProcessError as e:
         print(f"Error killing session '{session_name}': {e}")
+
 
 def list_tmux_sessions():
     """
